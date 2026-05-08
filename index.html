@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>安全许可证监控</title>
+<style>
+:root {
+  --bg:#f0f2f5;--card:#fff;--primary:#fa8c16;--primary2:#d46b08;
+  --green:#237804;--green-bg:#d9f7be;--orange:#d46b08;--orange-bg:#fff7e6;
+  --red:#a8071a;--red-bg:#fff1f0;--gray:#8c8c8c;--text:#1a1a1a;
+  --text2:#595959;--text3:#8c8c8c;--border:#f0f0f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);min-height:100vh;padding-bottom:40px}
+
+.header{background:linear-gradient(135deg,#fa8c16,#d4380d);padding:20px 16px 48px;position:relative}
+.header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:32px;background:var(--bg);border-radius:32px 32px 0 0}
+.header h1{color:#fff;font-size:18px;font-weight:900}
+.header p{color:rgba(255,255,255,0.75);font-size:12px;margin-top:4px}
+.badge{display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle}
+
+.stats-wrap{padding:0 12px;margin-top:-16px;position:relative;z-index:1}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-card{background:#fff;border-radius:12px;padding:12px 6px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid transparent;transition:all 0.2s}
+.stat-card.active{border-color:currentColor}
+.stat-num{font-size:24px;font-weight:900;line-height:1}
+.stat-label{font-size:10px;color:var(--text3);margin-top:3px}
+
+.section{padding:0 12px;margin-top:12px}
+.section-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;padding-left:4px}
+
+.search-box{background:#fff;border-radius:24px;padding:10px 14px;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin:10px 12px 0}
+.search-box input{flex:1;border:none;outline:none;font-size:14px;background:transparent;color:var(--text)}
+.search-box input::placeholder{color:var(--text3)}
+
+.update-bar{padding:8px 16px;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:#52c41a;flex-shrink:0}
+
+.card{background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden;border-left:4px solid transparent}
+.card:active{transform:scale(0.99)}
+.card-body{padding:12px 14px}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.company-name{font-size:15px;font-weight:700;flex:1;padding-right:8px}
+.app-name{font-size:11px;color:var(--text3);margin-top:2px}
+.badge-status{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.info-row{font-size:11px;color:var(--text3);margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap}
+
+.qual-item{padding:5px 8px;border-radius:7px;font-size:11px;margin:3px 0;display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#f5f5f5}
+.qual-name{font-weight:600;color:#333;flex:1}
+.qual-cert{color:#aaa;font-size:10px}
+
+.flow-wrap{margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0}
+.flow-title{font-size:10px;color:#aaa;margin-bottom:4px}
+.flow-item{display:flex;align-items:flex-start;gap:6px;margin-bottom:3px;font-size:11px}
+.flow-time{color:#bbb;white-space:nowrap;flex-shrink:0}
+.flow-step{color:#888;white-space:nowrap;flex-shrink:0}
+.flow-user{font-weight:600;white-space:nowrap;flex-shrink:0}
+.flow-idea{color:#333;flex:1}
+
+.reject-panel{margin-top:8px;padding:8px 10px;background:#fff1f0;border:1px solid #ffa39e;border-left:3px solid #a8071a;border-radius:0 6px 6px 0}
+.reject-title{font-size:10px;font-weight:700;color:#a8071a;margin-bottom:4px}
+.reject-item{font-size:11px;color:#cf1322;margin-bottom:2px;display:flex;gap:4px}
+
+.tab-bar{display:flex;background:#fff;margin:10px 12px 0;border-radius:12px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.tab-btn{flex:1;padding:8px;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.2s;font-family:inherit}
+.tab-btn.active{background:var(--primary);color:#fff}
+
+.empty{text-align:center;padding:40px 24px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+
+.change-item{background:#fff;border-radius:10px;padding:10px 14px;margin-bottom:6px;border-left:3px solid var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.change-name{font-weight:700;font-size:13px}
+.change-state{font-size:12px;color:var(--primary);margin-top:2px;font-weight:600}
+.change-reason{font-size:11px;color:#cf1322;margin-top:4px;padding:4px 6px;background:#fff1f0;border-radius:4px}
+.change-time{font-size:10px;color:var(--text3);margin-top:2px}
+
+.guide{padding:24px 16px}
+.guide h2{font-size:17px;font-weight:800;color:var(--text2);margin-bottom:8px;text-align:center}
+.guide p{font-size:13px;color:var(--text3);line-height:1.7;text-align:center;margin-bottom:20px}
+.step{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:flex-start;gap:10px}
+.step-num{width:22px;height:22px;background:var(--primary);color:#fff;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-txt{font-size:13px;color:var(--text2);line-height:1.6}
+.step-txt code{background:#f0f2f5;padding:1px 6px;border-radius:4px;font-size:11px;color:var(--primary)}
+.footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
+
+.refresh-btn{position:fixed;bottom:24px;right:16px;background:var(--primary);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;box-shadow:0 4px 16px rgba(250,140,22,0.4);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:999}
+.refresh-btn:active{transform:scale(0.95)}
+</style>
+</head>
+<body>
+
+<div id="no-data">
+  <div class="header">
+    <h1>🛡 安全许可证监控 <span class="badge">手机版</span></h1>
+    <p>陕西住建厅 · 安全生产许可证申报状态</p>
+  </div>
+  <div class="guide">
+    <div style="font-size:56px;text-align:center;margin-bottom:16px">📱</div>
+    <h2>如何同步数据到手机？</h2>
+    <p>在电脑上运行监控脚本后，点击「📱 手机查看」按钮同步即可</p>
+    <div class="step"><div class="step-num">1</div><div class="step-txt">电脑打开安许系统，运行 <code>安全许可证监控_v1_PRO.js</code> 脚本</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-txt">查询完成后点浮窗里的 <code>📱 手机查看</code> 按钮</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-txt">填入 GitHub Token，点「🚀 立即同步」</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-txt">手机打开此页面或点右下角 🔄 刷新即可查看</div></div>
+  </div>
+</div>
+
+<div id="has-data" style="display:none">
+  <div class="header">
+    <h1>🛡 安全许可证监控 <span class="badge">手机版</span></h1>
+    <p id="h-sub">加载中...</p>
+  </div>
+
+  <div class="stats-wrap">
+    <div class="stats-grid" id="stats-grid"></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('result',this)">查询结果</button>
+    <button class="tab-btn" onclick="switchTab('change',this)">变化记录</button>
+  </div>
+
+  <div id="result-tab">
+    <div class="search-box">
+      <span style="color:var(--text3)">🔍</span>
+      <input type="text" placeholder="搜索公司名 / 资质名称..." oninput="doSearch(this.value)"/>
+    </div>
+    <div class="update-bar"><div class="dot"></div><span id="update-time">-</span></div>
+    <div class="section" id="list-wrap"></div>
+  </div>
+
+  <div id="change-tab" style="display:none">
+    <div class="section" style="margin-top:12px">
+      <div class="section-title">状态变化记录</div>
+      <div id="change-list"></div>
+    </div>
+  </div>
+</div>
+
+<button class="refresh-btn" onclick="loadData()" title="刷新数据">🔄</button>
+<div class="footer">安全许可证监控 · GitHub Pages 版</div>
+
+<script>
+// applyState 状态映射
+const STATE = {
+  '-1':{label:'查询失败', color:'#8c8c8c', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9', order:9},
+  '0': {label:'草稿',    color:'#8c8c8c', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9', order:6},
+  '1': {label:'已受理',  color:'#531dab', bg:'#f9f0ff', border:'#d3adf7', lc:'#722ed1', order:3},
+  '2': {label:'审核中',  color:'#ad4e00', bg:'#fff7e6', border:'#ffd591', lc:'#d46b08', order:2},
+  '3': {label:'打回',    color:'#a8071a', bg:'#fff1f0', border:'#ffa39e', lc:'#a8071a', order:1},
+  '4': {label:'已办结',  color:'#237804', bg:'#f6ffed', border:'#b7eb8f', lc:'#237804', order:4},
+  '5': {label:'审核中',  color:'#ad4e00', bg:'#fff7e6', border:'#ffd591', lc:'#d46b08', order:2},
+};
+
+let allResults = [], changeLog = [], filterLabel = '全部', searchKw = '';
+
+async function loadData() {
+  try {
+    const res = await fetch('data.json?t=' + Date.now());
+    if (!res.ok) { showNoData(); return; }
+    const data = await res.json();
+    if (!data.r?.length) { showNoData(); return; }
+
+    allResults = data.r.map(r => ({
+      comment:      r.c || '',
+      applyState:   r.s ?? -1,
+      stateLabel:   r.l || STATE[String(r.s)]?.label || '未知',
+      applyTime:    r.a || '',
+      reportTime:   r.p || '',
+      updateTime:   r.u || '',
+      businessName: r.b || '',
+      batchId:      r.id || '',
+      quals:        (r.q || []).map(q => ({ name: q.n || '', certiNo: q.c || '' })),
+      flowRecords:  (r.f || []).map(f => ({ step: f.s || '', user: f.u || '', idea: f.i || '', time: f.t || '', isApprove: f.a })),
+      rejectReasons: r.rr || [],
+    }));
+    changeLog = (data.l || []).map(c => ({ comment: c.c, stateLabel: c.s, time: c.t, reasons: c.r || [] }));
+
+    document.getElementById('no-data').style.display = 'none';
+    document.getElementById('has-data').style.display = 'block';
+    document.getElementById('update-time').textContent = '最后更新：' + (data.t || '');
+    document.getElementById('h-sub').textContent = '共 ' + allResults.length + ' 个企业 · ' + (data.t || '');
+    renderStats(); renderList(allResults); renderChangeLog();
+  } catch(e) { showNoData(); }
+}
+
+function showNoData() {
+  document.getElementById('no-data').style.display = 'block';
+  document.getElementById('has-data').style.display = 'none';
+}
+
+function renderStats() {
+  const cnt = { '全部': allResults.length, '打回': 0, '审核中': 0, '已受理': 0, '已办结': 0 };
+  allResults.forEach(r => {
+    const s = r.applyState;
+    if (s === 3) cnt['打回']++;
+    else if (s === 2 || s === 5) cnt['审核中']++;
+    else if (s === 1) cnt['已受理']++;
+    else if (s === 4) cnt['已办结']++;
+  });
+  const colors = { '全部':'#fa8c16', '打回':'#a8071a', '审核中':'#ad4e00', '已受理':'#531dab', '已办结':'#237804' };
+  document.getElementById('stats-grid').innerHTML = Object.entries(cnt).map(([l, n]) =>
+    '<div class="stat-card ' + (filterLabel === l ? 'active' : '') + '" style="color:' + colors[l] + '" onclick="doFilter(\'' + l + '\')">' +
+    '<div class="stat-num" style="color:' + colors[l] + '">' + n + '</div>' +
+    '<div class="stat-label">' + l + '</div></div>'
+  ).join('');
+}
+
+function renderList(data) {
+  const el = document.getElementById('list-wrap');
+  if (!data.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>没有符合条件的企业</div>'; return; }
+  const sorted = [...data].sort((a, b) => (STATE[String(a.applyState)]?.order || 9) - (STATE[String(b.applyState)]?.order || 9));
+  el.innerHTML = sorted.map(r => renderCard(r)).join('');
+}
+
+function renderCard(r) {
+  const s = STATE[String(r.applyState)] || { label: r.stateLabel, color:'#999', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9' };
+  const isReject = r.applyState === 3 || r.rejectReasons.length > 0;
+  const lc = isReject ? '#a8071a' : r.applyState === 2 || r.applyState === 5 ? '#d46b08' : r.applyState === 1 ? '#722ed1' : r.applyState === 4 ? '#237804' : '#e8e8e8';
+
+  // 资质明细
+  const qualHtml = !r.quals.length ? '' :
+    '<div style="margin-bottom:6px">' +
+    r.quals.map(q =>
+      '<div class="qual-item">' +
+      '<span class="qual-name">▸ ' + q.name + '</span>' +
+      (q.certiNo ? '<span class="qual-cert">证号：' + q.certiNo + '</span>' : '') +
+      '</div>'
+    ).join('') + '</div>';
+
+  // 审批流程
+  const flowHtml = r.flowRecords.length ?
+    '<div class="flow-wrap"><div class="flow-title">审批记录</div>' +
+    r.flowRecords.map(f => {
+      const uc = f.isApprove === 3 ? '#cf1322' : f.isApprove === 5 ? '#fa8c16' : '#52c41a';
+      return '<div class="flow-item">' +
+        '<span class="flow-time">' + (f.time || '').slice(0, 16) + '</span>' +
+        '<span class="flow-step">' + (f.step || '') + '</span>' +
+        '<span class="flow-user" style="color:' + uc + '">' + (f.user || '') + '</span>' +
+        '<span class="flow-idea">' + (f.idea || '') + '</span>' +
+        '</div>';
+    }).join('') + '</div>' : '';
+
+  // 打回原因
+  const rejectHtml = r.rejectReasons.length ?
+    '<div class="reject-panel">' +
+    '<div class="reject-title">⚠ 打回原因</div>' +
+    r.rejectReasons.map(reason =>
+      '<div class="reject-item"><span>•</span><span>' + reason + '</span></div>'
+    ).join('') + '</div>' : '';
+
+  return '<div class="card" style="border-left-color:' + lc + '">' +
+    '<div class="card-body">' +
+    '<div class="card-top">' +
+    '<div>' +
+    '<div class="company-name">' + r.comment + '</div>' +
+    '<div class="app-name">' + (r.businessName || '') + (r.batchId ? ' · 批次 ' + r.batchId : '') + '</div>' +
+    '</div>' +
+    '<span class="badge-status" style="background:' + s.bg + ';color:' + s.color + ';border:1px solid ' + s.border + '">' + s.label + '</span>' +
+    '</div>' +
+    '<div class="info-row">' +
+    (r.applyTime ? '<span>📅 申报：' + r.applyTime + '</span>' : '') +
+    (r.reportTime ? '<span>📬 上报：' + r.reportTime + '</span>' : '') +
+    (r.updateTime ? '<span>🕐 更新：' + r.updateTime.slice(0, 16) + '</span>' : '') +
+    '</div>' +
+    qualHtml + rejectHtml + flowHtml +
+    '</div></div>';
+}
+
+function renderChangeLog() {
+  const el = document.getElementById('change-list');
+  if (!changeLog.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div style="font-size:13px">暂无变化记录</div></div>';
+    return;
+  }
+  el.innerHTML = changeLog.map(c =>
+    '<div class="change-item">' +
+    '<div class="change-name">' + c.comment + '</div>' +
+    '<div class="change-state">→ ' + c.stateLabel + '</div>' +
+    (c.reasons?.length ? '<div class="change-reason">• ' + c.reasons.join('<br>• ') + '</div>' : '') +
+    '<div class="change-time">' + c.time + '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function doFilter(label) {
+  filterLabel = label; renderStats();
+  let data = allResults;
+  if (label === '打回') data = data.filter(r => r.applyState === 3 || r.rejectReasons.length > 0);
+  else if (label === '审核中') data = data.filter(r => r.applyState === 2 || r.applyState === 5);
+  else if (label === '已受理') data = data.filter(r => r.applyState === 1);
+  else if (label === '已办结') data = data.filter(r => r.applyState === 4);
+  if (searchKw) data = data.filter(r => r.comment.includes(searchKw) || r.quals.some(q => q.name.includes(searchKw)));
+  renderList(data);
+}
+
+function doSearch(kw) {
+  searchKw = kw;
+  if (filterLabel !== '全部') { doFilter(filterLabel); return; }
+  let data = allResults;
+  if (kw) data = data.filter(r => r.comment.includes(kw) || r.quals.some(q => q.name.includes(kw)));
+  renderList(data);
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('result-tab').style.display = tab === 'result' ? 'block' : 'none';
+  document.getElementById('change-tab').style.display = tab === 'change' ? 'block' : 'none';
+}
+
+loadData();
+</script>
+</body>
+</html>
