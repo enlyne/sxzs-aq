@@ -99,10 +99,10 @@ body{background:var(--bg);font-family:-apple-system,"PingFang SC","Microsoft YaH
     <div style="font-size:56px;text-align:center;margin-bottom:16px">📱</div>
     <h2>如何同步数据到手机？</h2>
     <p>在电脑上运行监控脚本后，点击「📱 手机查看」按钮同步即可</p>
-    <div class="step"><div class="step-num">1</div><div class="step-txt">电脑打开安许系统，运行 <code>安全许可证监控_v1_PRO.js</code> 脚本</div></div>
+    <div class="step"><div class="step-num">1</div><div class="step-txt">电脑打开安许系统，运行 <code>安全许可证监控_v1_PRO.js</code> 脚本（最新版）</div></div>
     <div class="step"><div class="step-num">2</div><div class="step-txt">查询完成后点浮窗里的 <code>📱 手机查看</code> 按钮</div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-txt">填入 GitHub Token，点「🚀 立即同步」</div></div>
-    <div class="step"><div class="step-num">4</div><div class="step-txt">手机打开此页面或点右下角 🔄 刷新即可查看</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-txt">填入 GitHub Token 点「🚀 立即同步」，之后每次查询<b>自动同步</b>，无需手动操作</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-txt">手机打开 <code>enlyne.github.io/sxzs-aq</code> 或点右下角 🔄 刷新查看</div></div>
   </div>
 </div>
 
@@ -144,13 +144,15 @@ body{background:var(--bg);font-family:-apple-system,"PingFang SC","Microsoft YaH
 <script>
 // applyState 状态映射
 const STATE = {
-  '-1':{label:'查询失败', color:'#8c8c8c', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9', order:9},
-  '0': {label:'草稿',    color:'#8c8c8c', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9', order:6},
-  '1': {label:'已受理',  color:'#531dab', bg:'#f9f0ff', border:'#d3adf7', lc:'#722ed1', order:3},
-  '2': {label:'审核中',  color:'#ad4e00', bg:'#fff7e6', border:'#ffd591', lc:'#d46b08', order:2},
-  '3': {label:'打回',    color:'#a8071a', bg:'#fff1f0', border:'#ffa39e', lc:'#a8071a', order:1},
-  '4': {label:'已办结',  color:'#237804', bg:'#f6ffed', border:'#b7eb8f', lc:'#237804', order:4},
-  '5': {label:'审核中',  color:'#ad4e00', bg:'#fff7e6', border:'#ffd591', lc:'#d46b08', order:2},
+  '-1':{label:'查询失败',   color:'#8c8c8c', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9', order:9},
+  '0': {label:'草稿',       color:'#8c8c8c', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9', order:7},
+  '1': {label:'已受理',     color:'#531dab', bg:'#f9f0ff', border:'#d3adf7', lc:'#722ed1', order:3},
+  '2': {label:'审核中',     color:'#ad4e00', bg:'#fff7e6', border:'#ffd591', lc:'#d46b08', order:2},
+  '3': {label:'打回',       color:'#a8071a', bg:'#fff1f0', border:'#ffa39e', lc:'#a8071a', order:1},
+  '4': {label:'办结未通',   color:'#a8071a', bg:'#fff1f0', border:'#ffa39e', lc:'#a8071a', order:5},
+  '5': {label:'审核中',     color:'#ad4e00', bg:'#fff7e6', border:'#ffd591', lc:'#d46b08', order:2},
+  '6': {label:'✅ 办结通过', color:'#135200', bg:'#d9f7be', border:'#95de64', lc:'#237804', order:4},
+  '7': {label:'办结未通',   color:'#a8071a', bg:'#fff1f0', border:'#ffa39e', lc:'#a8071a', order:5},
 };
 
 let allResults = [], changeLog = [], filterLabel = '全部', searchKw = '';
@@ -191,15 +193,16 @@ function showNoData() {
 }
 
 function renderStats() {
-  const cnt = { '全部': allResults.length, '打回': 0, '审核中': 0, '已受理': 0, '已办结': 0 };
+  const cnt = { '全部': allResults.length, '打回': 0, '审核中': 0, '已受理': 0, '办结通过': 0, '办结未通': 0 };
   allResults.forEach(r => {
     const s = r.applyState;
     if (s === 3) cnt['打回']++;
     else if (s === 2 || s === 5) cnt['审核中']++;
     else if (s === 1) cnt['已受理']++;
-    else if (s === 4) cnt['已办结']++;
+    else if (s === 6) cnt['办结通过']++;
+    else if (s === 4 || s === 7) cnt['办结未通']++;
   });
-  const colors = { '全部':'#fa8c16', '打回':'#a8071a', '审核中':'#ad4e00', '已受理':'#531dab', '已办结':'#237804' };
+  const colors = { '全部':'#fa8c16', '打回':'#a8071a', '审核中':'#ad4e00', '已受理':'#531dab', '办结通过':'#237804', '办结未通':'#595959' };
   document.getElementById('stats-grid').innerHTML = Object.entries(cnt).map(([l, n]) =>
     '<div class="stat-card ' + (filterLabel === l ? 'active' : '') + '" style="color:' + colors[l] + '" onclick="doFilter(\'' + l + '\')">' +
     '<div class="stat-num" style="color:' + colors[l] + '">' + n + '</div>' +
@@ -217,7 +220,9 @@ function renderList(data) {
 function renderCard(r) {
   const s = STATE[String(r.applyState)] || { label: r.stateLabel, color:'#999', bg:'#fafafa', border:'#d9d9d9', lc:'#d9d9d9' };
   const isReject = r.applyState === 3 || r.rejectReasons.length > 0;
-  const lc = isReject ? '#a8071a' : r.applyState === 2 || r.applyState === 5 ? '#d46b08' : r.applyState === 1 ? '#722ed1' : r.applyState === 4 ? '#237804' : '#e8e8e8';
+  const lc = isReject ? '#a8071a'
+    : r.applyState === 6 ? '#237804'
+    : r.applyState === 2 || r.applyState === 5 ? '#d46b08' : r.applyState === 1 ? '#722ed1' : r.applyState === 4 ? '#237804' : '#e8e8e8';
 
   // 资质明细
   const qualHtml = !r.quals.length ? '' :
@@ -275,9 +280,9 @@ function renderChangeLog() {
     return;
   }
   el.innerHTML = changeLog.map(c =>
-    '<div class="change-item">' +
+    '<div class="change-item" style="border-left-color:' + (c.stateLabel&&c.stateLabel.includes('通过') ? '#237804' : '#fa8c16') + ';background:' + (c.stateLabel&&c.stateLabel.includes('通过') ? '#f6ffed' : '#fff') + '">' +
     '<div class="change-name">' + c.comment + '</div>' +
-    '<div class="change-state">→ ' + c.stateLabel + '</div>' +
+    '<div class="change-state" style="color:' + (c.stateLabel&&c.stateLabel.includes('通过') ? '#237804' : '#fa8c16') + '">' + (c.stateLabel&&c.stateLabel.includes('通过') ? '🎉' : '') + ' → ' + c.stateLabel + '</div>' +
     (c.reasons?.length ? '<div class="change-reason">• ' + c.reasons.join('<br>• ') + '</div>' : '') +
     '<div class="change-time">' + c.time + '</div>' +
     '</div>'
@@ -290,7 +295,8 @@ function doFilter(label) {
   if (label === '打回') data = data.filter(r => r.applyState === 3 || r.rejectReasons.length > 0);
   else if (label === '审核中') data = data.filter(r => r.applyState === 2 || r.applyState === 5);
   else if (label === '已受理') data = data.filter(r => r.applyState === 1);
-  else if (label === '已办结') data = data.filter(r => r.applyState === 4);
+  else if (label === '办结通过') data = data.filter(r => r.applyState === 6);
+  else if (label === '办结未通') data = data.filter(r => r.applyState === 4 || r.applyState === 7);
   if (searchKw) data = data.filter(r => r.comment.includes(searchKw) || r.quals.some(q => q.name.includes(searchKw)));
   renderList(data);
 }
